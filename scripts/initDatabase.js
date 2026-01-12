@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT,
     fb_id TEXT UNIQUE
-);`;
+);`
 
-fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
+// fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
 
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {
@@ -31,7 +31,9 @@ async function initializeDatabase() {
         const db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 console.error(`Failed to connect to database: ${err.message}`);
-                db.close();
+                if (db) {
+                    db.close();
+                }
                 return reject(err);
             }
             console.log('Connected to the SQLite database.');
@@ -44,17 +46,21 @@ async function initializeDatabase() {
                 fs.readFile(initSqlPath, 'utf8', (err, data) => {
                     if (err) {
                         console.error(`Failed to read database.sql: ${err.message}`);
-                        db.close();
+                        if (db) {
+                            db.close();
+                        }
                         return reject(err);
                     }
-                
+
                     console.log('SQL commands from database.sql:', data); // Log the SQL commands
-                
+
                     // Execute the SQL commands from the database.sql file
                     db.exec(data, (err) => {
                         if (err) {
                             console.error(`Failed to initialize database schema: ${err.message}`);
-                            db.close();
+                            if (db) {
+                                db.close();
+                            }
                             return reject(new Error(`Database initialization failed: ${err.message}`));
                         }
                         resolve(db);
