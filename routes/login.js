@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const sqlite3 = require('sqlite3');
 const AUTH_URL = process.env.AUTH_URL || 'localhost:4000/auth';
 const THIS_URL = process.env.THIS_URL || 'http://localhost:3000/login';
-const db = new sqlite3.Database('./database/data.db', (error) => {
+const db = new sqlite3.Database('./database/database.sqlite', (error) => {
     if (error) {
         console.log(error);
     }

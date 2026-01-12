@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure the data folder exists
-const dataFolderPath = path.resolve(__dirname, '../data');
+const dataFolderPath = path.resolve(__dirname, '../database');
 if (!fs.existsSync(dataFolderPath)) {
     fs.mkdirSync(dataFolderPath);
 }
@@ -12,7 +12,7 @@ if (!fs.existsSync(dataFolderPath)) {
 const dbPath = path.resolve(dataFolderPath, 'database.sqlite'); // Ensure database.sqlite is in the data folder
 const initSqlPath = path.resolve(dataFolderPath, 'database.sql'); // Ensure database.sql is in the data folder
 
-// Create the database.sql file with the necessary SQL commands
+// Default SQL commands to use when no database.sql exists
 const sqlCommands = `
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,7 +20,13 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT
 );`
 
-fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
+// Only create a new database.sql if one doesn't already exist. Do not overwrite an existing file.
+if (!fs.existsSync(initSqlPath)) {
+    fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
+    console.log('Created default database.sql');
+} else {
+    console.log('Found existing database.sql — leaving it intact.');
+}
 
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {
