@@ -3,3 +3,4 @@ CREATE TABLE IF NOT EXISTS users (
     fb_id TEXT UNIQUE,
     username TEXT
 );
+
