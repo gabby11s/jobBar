@@ -18,9 +18,15 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT,
     fb_id TEXT UNIQUE
-);`
+);`;
 
-// fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
+// Only create a new database.sql if one doesn't already exist. Do not overwrite an existing file.
+if (!fs.existsSync(initSqlPath)) {
+    fs.writeFileSync(initSqlPath, sqlCommands.trim(), 'utf8');
+    console.log('Created default database.sql');
+} else {
+    console.log('Found existing database.sql — leaving it intact.');
+}
 
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {
@@ -31,9 +37,7 @@ async function initializeDatabase() {
         const db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 console.error(`Failed to connect to database: ${err.message}`);
-                if (db) {
-                    db.close();
-                }
+                db.close();
                 return reject(err);
             }
             console.log('Connected to the SQLite database.');
@@ -46,9 +50,7 @@ async function initializeDatabase() {
                 fs.readFile(initSqlPath, 'utf8', (err, data) => {
                     if (err) {
                         console.error(`Failed to read database.sql: ${err.message}`);
-                        if (db) {
-                            db.close();
-                        }
+                        db.close();
                         return reject(err);
                     }
 
@@ -58,9 +60,7 @@ async function initializeDatabase() {
                     db.exec(data, (err) => {
                         if (err) {
                             console.error(`Failed to initialize database schema: ${err.message}`);
-                            if (db) {
-                                db.close();
-                            }
+                            db.close();
                             return reject(new Error(`Database initialization failed: ${err.message}`));
                         }
                         resolve(db);

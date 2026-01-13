@@ -4,9 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const isAuthenticated = require('../middleware/isAuthenticated');
 
-// Free route
-router.get('/free', isAuthenticated, (req, res) => {
-    res.render('free', { title: 'Free Lance Page' });
+// Freelance route
+router.get('/freelance', isAuthenticated, (req, res) => {
+    res.render('freelance', { title: 'Freelance Page' });
 });
 
 module.exports = router;
