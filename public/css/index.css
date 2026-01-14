@@ -1,7 +1,7 @@
 /* Dark-pink aesthetic for the index page
    - Centers the hero area and the two buttons
    - Responsive: buttons are side-by-side on wide screens and stacked on small screens
-   - Uses IDs `#free`, `#links` and class `.btn` from `views/index.ejs`
+   - Uses IDs `#freelance`, `#links` and class `.btn` from `views/index.ejs`
 */
 
 :root{
