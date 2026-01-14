@@ -44,8 +44,6 @@ async function initializeDatabase() {
 
             // If the database file does not exist, initialize it
             if (!dbExists) {
-                // Create an empty database file
-                // fs.writeFileSync(dbPath, '');
 
                 fs.readFile(initSqlPath, 'utf8', (err, data) => {
                     if (err) {
