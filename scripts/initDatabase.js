@@ -51,9 +51,9 @@ async function initializeDatabase() {
                         db.close();
                         return reject(err);
                     }
-                
+
                     console.log('SQL commands from database.sql:', data); // Log the SQL commands
-                
+
                     // Execute the SQL commands from the database.sql file
                     db.exec(data, (err) => {
                         if (err) {

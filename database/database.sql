@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id TEXT,
+    job_title TEXT,
     company TEXT,
-    title TEXT,
-    description TEXT,
-    employee_id INTEGER
+    date_posted DATE
 );
