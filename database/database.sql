@@ -4,3 +4,17 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT
 );
 
+CREATE TABLE IF NOT EXISTS jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company TEXT,
+    title TEXT,
+    description TEXT,
+    employee_id INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS companies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    description TEXT,
+    location TEXT
+);
