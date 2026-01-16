@@ -44,11 +44,13 @@ const loginRouter = require('./routes/login');
 const companiesRouter = require('./routes/companies');
 const postRouter = require('./routes/post');
 const jobPostsRouter = require('./routes/jobPosts');
+const jobRouter = require('./routes/job');
 app.use('/', indexRouter);
 app.use('/', loginRouter);
 app.use('/', companiesRouter);
 app.use('/', postRouter);
 app.use('/', jobPostsRouter);
+app.use('/', jobRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
