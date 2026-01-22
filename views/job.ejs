@@ -13,7 +13,7 @@
     <div class="nav-row">
       <button class="small-btn" onclick="location.href='/companies'">All companies</button>
       <button class="small-btn" onclick="location.href='/'">Home</button>
-      <button class="small-btn" onclick="location.href='/jobPosts'">Post a Job</button>
+      <button class="small-btn" onclick="location.href='/jobPosts/<%= company ? company.name : 'Not found' %>'">Post a Job</button>
     </div>
 
     <div class="jobs-header">

@@ -9,8 +9,9 @@ const db = new sqlite3.Database(dbFile, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CR
     if (err) console.error('Failed to open database in free route:', err);
 });
 // Post route
-router.get('/jobPosts', isAuthenticated, (req, res) => {
-    res.render('jobPosts', { title: 'Create a Job Post' });
+router.get('/jobPosts/:companyName', isAuthenticated, (req, res) => {
+    const { companyName } = req.params;
+    res.render('jobPosts', { title: 'Create a Job Post', company: companyName });
 });
 
 router.post('/jobPosts', isAuthenticated, (req, res) => {
@@ -24,7 +25,7 @@ router.post('/jobPosts', isAuthenticated, (req, res) => {
             console.error('Database error:', err);
             return res.status(500).send('Internal Server Error');
         }
-        res.redirect('/');
+        res.redirect(`/job/${company}`); // Redirect to the job page for the specific company
     });
 });
 module.exports = router;

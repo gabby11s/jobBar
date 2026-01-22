@@ -16,12 +16,9 @@
 
     <div class="container">
       <div class="post-card">
-        <h1>Post a Job</h1>
+        <h1>Post a Job for <%= company %></h1>
         <form action="/jobPosts" method="POST">
-            <div class="form-row">
-                <label for="company">Company Name:</label>
-                <input type="text" id="company" name="company" required>
-            </div>
+            <input type="hidden" name="company" value="<%= company %>">
             <div class="form-row">
                 <label for="title">Job Title:</label>
                 <input type="text" id="title" name="title" required>
