@@ -29,6 +29,13 @@
             <div class="job-title"><%= job.title %></div>
             <div class="job-desc"><%= job.description %></div>
             <div class="job-pay">Pay: <%= job.pay %></div>
+            <% if (job.employee_id) { %>
+              <div class="job-meta taken">Taken</div>
+            <% } else { %>
+              <form action="/job/<%= job.id %>/apply" method="POST">
+                <button type="submit" class="apply-btn">Apply</button>
+              </form>
+            <% } %>
           </article>
         <% }) %>
       <% } %>

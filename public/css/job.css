@@ -7,8 +7,29 @@
 .job-title{font-weight:600;color:var(--muted)}    
       
 .job-desc{margin-top:0.5rem;color: #f2eaf0}  
+
+.job-pay{margin-top:0.75rem;font-weight:500;color:var(--muted)}
       
 .nav-row{display:flex;gap:0.5rem;margin-bottom:1rem} 
       
 .small-btn{padding:0.4rem 0.8rem;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer}
+/* Apply button and Taken badge */
+.apply-btn{
+	border:0;
+	padding:0.5rem 0.9rem;
+	border-radius:8px;
+	background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+	color:#fff;
+	cursor:pointer;
+	font-weight:700;
+}
+.apply-btn:hover{transform:translateY(-2px)}
+.job-meta.taken{
+	display:inline-block;
+	padding:0.4rem 0.65rem;
+	border-radius:6px;
+	background:rgba(255,255,255,0.04);
+	color:#f8e9ef;
+	font-weight:700;
+}
     
