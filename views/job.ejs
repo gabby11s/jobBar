@@ -13,6 +13,9 @@
     <div class="nav-row">
       <button class="small-btn" onclick="location.href='/companies'">All companies</button>
       <button class="small-btn" onclick="location.href='/'">Home</button>
+      <% if (isManager) { %>
+        <a class="small-btn" href="/jobPosts/<%= company ? encodeURIComponent(company.name) : 'Not%20found' %>">Post a Job</a>
+      <% } %>
       <a class="small-btn" href="/jobPosts/<%= company ? encodeURIComponent(company.name) : 'Not%20found' %>">Post a Job</a>
       <button class="small-btn" onclick="location.href='/jobManager/<%= company ? encodeURIComponent(company.name) : 'Not%20found' %>'">Manage Jobs</button>
     </div>

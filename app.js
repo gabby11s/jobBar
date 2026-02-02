@@ -24,19 +24,47 @@ app.locals.db = db;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware to parse request bodies
+// Middleware
 app.use(express.json());
-// Parse URL-encoded bodies (HTML form submissions)
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+
+
 
 app.use(session({
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false
 }));
+
+// Parse managers from environment (accept formats like: [ 43, 48 ] or "43,48")
+const rawManagers = process.env.managers || process.env.MANAGERS || '';
+let parsedManagers = [];
+try {
+    const s = String(rawManagers).trim();
+    if (!s) parsedManagers = [];
+    else if (s.startsWith('[') && s.endsWith(']')) {
+        // try JSON parse
+        parsedManagers = JSON.parse(s).map(String);
+    } else if (s.indexOf(',') !== -1) {
+        parsedManagers = s.split(',').map(x => x.trim()).filter(Boolean).map(String);
+    } else {
+        parsedManagers = [s.replace(/\s+/g, '')].filter(Boolean).map(String);
+    }
+} catch (err) {
+    // fallback: try to extract numbers
+    parsedManagers = (String(rawManagers).match(/\d+/g) || []).map(String);
+}
+
+// expose manager list and current user's fb_id/isManager to all views
+app.use((req, res, next) => {
+    res.locals.managers = parsedManagers;
+    const fb = req.session && req.session.fb_id;
+    res.locals.fb_id = fb || null;
+    res.locals.isManager = fb ? parsedManagers.includes(String(fb)) : false;
+    next();
+});
 
 // Routes
 const indexRouter = require('./routes/index');
@@ -45,6 +73,7 @@ const companiesRouter = require('./routes/companies');
 const postRouter = require('./routes/post');
 const jobPostsRouter = require('./routes/jobPosts');
 const jobRouter = require('./routes/job');
+const payRouter = require('./socket/pay');
 const jobManagerRouter = require('./routes/jobManager');
 app.use('/', indexRouter);
 app.use('/', loginRouter);
@@ -52,6 +81,7 @@ app.use('/', companiesRouter);
 app.use('/', postRouter);
 app.use('/', jobPostsRouter);
 app.use('/', jobRouter);
+app.use('/', payRouter);
 app.use('/', jobManagerRouter);
 
 app.listen(port, () => {
