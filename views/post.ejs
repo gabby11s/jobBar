@@ -16,25 +16,27 @@
     <div class="container">
       <div class="post-card">
         <h1>Post your Company</h1>
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="form-error" style="color:#ffd1d9;margin-bottom:0.75rem;font-weight:700;"><%= error %></div>
+                <% } %>
         <form action="/post" method="POST">
             <div class="form-row">
                 <label for="name">Company Name:</label>
-                <input type="text" id="name" name="name" required>
+                                <input type="text" id="name" name="name" required value="<%= form && form.name ? form.name : '' %>">
             </div>
             <div class="form-row">
                 <label for="description">Description:</label>
-                <textarea id="description" name="description" required></textarea>
+                                <textarea id="description" name="description" required><%= form && form.description ? form.description : '' %></textarea>
             </div>
             <div class="form-row">
                 <label for="link">Website URL:</label>
-                <input type="url" id="link" name="link" required>
+                                <input type="url" id="link" name="link" required value="<%= form && form.link ? form.link : '' %>">
             </div>
-                <input type="hidden" name="owner_id" value="<%= fb_id %>">
+                                <input type="hidden" name="owner_id" value="<%= fb_id %>">
             <button type="submit">Submit</button>
         </form>
       </div>
     </div>
-<h1></h1>
 </body>
 </html>
 
