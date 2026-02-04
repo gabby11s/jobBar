@@ -1,68 +1,179 @@
-.jobs-container{max-width:900px;margin:2rem auto;padding:0 1rem}
+body{
+    margin:0;
+    padding:0;
+    overflow:hidden;  /* Hide main page scrollbar */
+}
+
+.jobs-container{
+    max-width:1800px;
+    margin:0 auto;
+    padding:1rem;
+    height:100vh;  /* Changed from min-height to height */
+    box-sizing:border-box;
+    overflow:hidden;  /* Prevent container scrolling */
+}
       
-.jobs-header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
-      
-.job-card{background: rgba(255,255,255,0.03); padding:1rem;border-radius:8px;margin:0.75rem 0}    
+.jobs-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:1rem;
+}
+
+.jobs-header h1{
+    margin:0;
+}
+
+/* Job page grid layout (flexbox) */
+.jobs-grid{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:1rem;
+    max-height:calc(100vh - 200px);
+    overflow-y:auto;
+    padding-right:0.5rem;
+}
+
+.jobs-grid::-webkit-scrollbar{width:8px}
+.jobs-grid::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);border-radius:4px}
+.jobs-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:4px}
+.jobs-grid::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.3)}
+
+/* Job Manager page - 3 column layout */
+.jobs-columns{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1.5rem;
+    height:calc(100vh - 150px);  /* Takes remaining viewport height */
+}
+
+.jobs-column{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;  /* Prevent column overflow */
+}
+
+.jobs-column h2{
+    margin:0 0 1rem 0;
+    color:var(--muted);
+    font-size:1.2rem;
+    text-align:center;
+    flex-shrink:0;  /* Prevent header from shrinking */
+}
+
+.jobs-scroll{
+    overflow-y:auto;
+    flex:1;  /* Take remaining space in column */
+    padding-right:0.5rem;
+}
+
+/* Show scrollbars for job manager columns */
+.jobs-scroll::-webkit-scrollbar{
+    width:8px;
+}
+
+.jobs-scroll::-webkit-scrollbar-track{
+    background:rgba(255,255,255,0.05);
+    border-radius:4px;
+}
+
+.jobs-scroll::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,0.2);
+    border-radius:4px;
+}
+
+.jobs-scroll::-webkit-scrollbar-thumb:hover{
+    background:rgba(255,255,255,0.3);
+}
+
+/* Job card styling (shared between both pages) */
+.job-card{
+    background:rgba(255,255,255,0.03);
+    padding:1rem;
+    border-radius:8px;
+    display:flex;
+    flex-direction:column;
+}
+
+/* Job page specific card sizing */
+.jobs-grid .job-card{
+    flex:1 1 250px;
+    max-width:350px;
+}
+
+/* Job Manager page specific card sizing */
+.jobs-scroll .job-card{
+    margin:0 0 0.75rem 0;
+}
       
 .job-title{font-weight:600;color:var(--muted)}    
       
-.job-desc{margin-top:0.5rem;color: #f2eaf0}  
+.job-desc{margin-top:0.5rem;color:#f2eaf0;flex-grow:1}  
 
 .job-pay{margin-top:0.75rem;font-weight:500;color:var(--muted)}
       
-.nav-row{display:flex;gap:0.5rem;margin-bottom:1rem} 
+.nav-row{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap} 
       
-.small-btn{padding:0.4rem 0.8rem;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer}
-/* Apply button and Taken badge */
+.small-btn{padding:0.4rem 0.8rem;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);cursor:pointer;text-decoration:none}
+
 .apply-btn{
-	border:0;
-	padding:0.5rem 0.9rem;
-	border-radius:8px;
-	background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
-	color:#fff;
-	cursor:pointer;
-	font-weight:700;
+    border:0;
+    padding:0.5rem 0.9rem;
+    border-radius:8px;
+    background:linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+    color:#fff;
+    cursor:pointer;
+    font-weight:700;
+    margin-top:0.75rem;
+    width:100%;
 }
 .apply-btn:hover{transform:translateY(-2px)}
-.job-meta.taken{
-	display:flex;
-	align-items:center;
-	gap:0.5rem;
-	border-radius:6px;
-	color:#fce59b;
-	font-weight:700;
+
+.job-meta{
+    display:inline-block;
+    padding:0.4rem 0.65rem;
+    border-radius:6px;
+    background:rgba(255,255,255,0.04);
+    font-weight:700;
+    margin-top:0.75rem;
 }
-.job-meta.available{
-	display:flex;
-	align-items:center;
-	gap:0.5rem;
-	border-radius:6px;
-	color:#90ee90;
-	font-weight:700;
-}
+
+.job-meta.taken{color:rgb(252, 229, 155)}
+.job-meta.available{color:rgb(173, 247, 185)}
+.job-meta.completed{color:rgb(188, 165, 235)}
+
 .complete-button{
-	margin-left:0.5rem;
-	padding:0.3rem 0.6rem;
-	border-radius:6px;
-	border:1px solid rgba(255,255,255,0.06);
-	background:mediumpurple;
-	color:white;
-	cursor:pointer;
+    margin-left:0.5rem;
+    padding:0.3rem 0.6rem;
+    border-radius:6px;
+    border:1px solid rgba(255,255,255,0.06);
+    background:mediumpurple;
+    color:white;
+    cursor:pointer;
 }
+
+.popup-container{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
+
 .popup-content{
-	background:rgb(43, 11, 30);
-	color: white;
-	padding:1.5rem;
-	border-radius:8px;
-	max-width:400px;
-	margin:auto;
+    background:rgb(43, 11, 30);
+    color:white;
+    padding:1.5rem;
+    border-radius:8px;
+    max-width:400px;
+    margin:auto;
 }
+
+.close-btn{float:right;font-size:1.5rem;cursor:pointer}
+
 #completeTransfer{
-	background: mediumpurple;
-	color:#fff;
-	border:none;
-	padding:0.6rem 1.2rem;
-	border-radius:8px;
-	cursor:pointer;
-	font-weight:700;
+    background:mediumpurple;
+    color:#fff;
+    border:none;
+    padding:0.6rem 1.2rem;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:700;
 }

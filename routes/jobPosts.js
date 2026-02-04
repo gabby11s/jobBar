@@ -28,11 +28,11 @@ router.post('/jobPosts', isAuthenticated, (req, res) => {
     }
 
     const body = req.body || {};
-    const { company, title, description, pay } = body;
-    if (!company || !title || !description || !pay) {
+    const { company, title, description, pay, status } = body;
+    if (!company || !title || !description || !pay || !status) {
         return res.status(400).send('All fields are required.');
     }
-    db.run('INSERT INTO jobs (company, title, description, pay) VALUES (?, ?, ?, ?)', [company, title, description, pay], function(err) {
+    db.run('INSERT INTO jobs (company, title, description, pay, status) VALUES (?, ?, ?, ?, ?)', [company, title, description, pay, status], function(err) {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).send('Internal Server Error');
