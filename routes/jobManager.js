@@ -15,7 +15,12 @@ router.get('/jobManager/:companyName', isAuthenticated, (req, res) => {
     // Query jobs by company name (case-insensitive) and order newest first.
     const jobsQuery = `
         SELECT j.*, 
-        u.username as employee_name
+            u.username as employee_name,
+            CASE 
+                WHEN j.status IS NOT NULL AND j.status != '' THEN j.status
+                WHEN j.employee_id IS NOT NULL AND j.employee_id != 0 THEN 'taken'
+                ELSE 'available'
+            END as status
         FROM jobs j
         LEFT JOIN users u ON j.employee_id = u.fb_id
         WHERE j.company = ? COLLATE NOCASE
@@ -51,17 +56,46 @@ router.get('/jobManager/:companyName', isAuthenticated, (req, res) => {
 
             // render job view — the template expects `company` (singular), so pass that
             // pass current session user info so template can show apply buttons
-            res.render('jobManager', { 
-                companies, 
+            res.render('jobManager', {
+                companies,
                 company: selectedCompany,
-                jobs, 
-                user: req.session.user, 
-                fb_id: req.session.fb_id 
+                jobs,
+                user: req.session.user,
+                fb_id: req.session.fb_id
             });
         });
     });
 });
 
+// Route to mark a job as complete
+router.post('/job/:jobId/complete', isAuthenticated, (req, res) => {
+    const db = req.app.locals.db;
+    const jobId = req.params.jobId;
+    const { pin } = req.body;
+    const userId = req.session.fb_id;
+
+    // TODO: Verify the PIN matches the user's PIN
+    // For now, we'll just update the status
+
+    // Verify the job is taken by this user
+    db.get('SELECT * FROM jobs WHERE id = ? AND employee_id = ?', [jobId, userId], (err, job) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+
+        if (!job) {
+            return res.status(403).json({ success: false, message: 'Job not found or not assigned to you' });
+        }
+
+        // Update job status to completed
+        db.run('UPDATE jobs SET status = ? WHERE id = ?', ['completed', jobId], function (updateErr) {
+            if (updateErr) {
+                console.error('Error updating job:', updateErr);
+                return res.status(500).json({ success: false, message: 'Error updating job' });
+            }
+
+            res.json({ success: true });
 // Mark a job as complete (called after successful transfer)
 router.post('/job/:id/complete', isAuthenticated, (req, res) => {
     const db = req.app.locals.db;
