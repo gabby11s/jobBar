@@ -87,69 +87,6 @@ router.get('/jobManager/:companyName', isAuthenticated, (req, res) => {
     });
 });
 
-// Route to mark a job as complete
-router.post('/job/:jobId/complete', isAuthenticated, (req, res) => {
-    const db = req.app.locals.db;
-    const jobId = req.params.jobId;
-    const { pin } = req.body;
-    const userId = req.session.fb_id;
-
-    // TODO: Verify the PIN matches the user's PIN
-    // For now, we'll just update the status
-
-    // Verify the job is taken by this user
-    db.get('SELECT * FROM jobs WHERE id = ? AND employee_id = ?', [jobId, userId], (err, job) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ success: false, message: 'Database error' });
-        }
-
-        if (!job) {
-            return res.status(403).json({ success: false, message: 'Job not found or not assigned to you' });
-        }
-
-        // Update job status to completed
-        db.run('UPDATE jobs SET status = ? WHERE id = ?', ['completed', jobId], function (updateErr) {
-            if (updateErr) {
-                console.error('Error updating job:', updateErr);
-                return res.status(500).json({ success: false, message: 'Error updating job' });
-            }
-
-            res.json({ success: true });
-        });
-    });
-});
-// Mark a job as complete (called after successful transfer)
-router.post('/job/:id/complete', isAuthenticated, (req, res) => {
-    const db = req.app.locals.db;
-    const jobId = req.params.id;
-    const requesterFb = req.session && req.session.fb_id ? String(req.session.fb_id) : null;
-
-    if (!requesterFb) return res.status(403).json({ success: false, message: 'Forbidden' });
-
-    // Find the job and its company, then verify requester is the company owner or root admin (fb_id === '1')
-    db.get('SELECT j.*, c.owner_id FROM jobs j LEFT JOIN companies c ON j.company = c.name WHERE j.id = ?', [jobId], (err, row) => {
-        if (err) {
-            console.error('DB error fetching job:', err);
-            return res.status(500).json({ success: false, message: 'DB error' });
-        }
-        if (!row) return res.status(404).json({ success: false, message: 'Job not found' });
-
-        const ownerFb = row.owner_id !== undefined && row.owner_id !== null ? String(row.owner_id) : null;
-        if (requesterFb !== ownerFb && requesterFb !== '1') {
-            return res.status(403).json({ success: false, message: 'Forbidden' });
-        }
-
-        db.run('DELETE FROM jobs WHERE id = ?', [jobId], function(delErr) {
-            if (delErr) {
-                console.error('Failed to mark job complete:', delErr);
-                return res.status(500).json({ success: false, message: 'DB error' });
-            }
-            return res.json({ success: true });
-        });
-    });
-});
-
 // Accept an applicant and assign them to the job (no PIN required)
 router.post('/jobManager/accept', isAuthenticated, async (req, res) => {
     const db = req.app.locals.db;
@@ -157,7 +94,7 @@ router.post('/jobManager/accept', isAuthenticated, async (req, res) => {
     const ownerId = req.session.fb_id;
 
     if (!jobId || !applicantId) {
-        return res.status(400).json({ error: 'Missing required fields' });
+        return res.status(400).send('Missing required fields');
     }
 
     try {
@@ -170,7 +107,7 @@ router.post('/jobManager/accept', isAuthenticated, async (req, res) => {
         });
 
         if (!job) {
-            return res.status(404).json({ error: 'Job not found' });
+            return res.status(404).send('Job not found');
         }
 
         // Verify company ownership
@@ -182,10 +119,10 @@ router.post('/jobManager/accept', isAuthenticated, async (req, res) => {
         });
 
         if (!company || company.owner_id !== ownerId) {
-            return res.status(403).json({ error: 'You do not own this company' });
+            return res.status(403).send('You do not own this company');
         }
 
-        // Assign the applicant to the job
+        // Assign the applicant to the job and change status to 'in_progress'
         await new Promise((resolve, reject) => {
             db.run(
                 'UPDATE jobs SET employee_id = ?, status = ? WHERE id = ?',
@@ -205,10 +142,94 @@ router.post('/jobManager/accept', isAuthenticated, async (req, res) => {
             });
         });
 
-        res.json({ success: true });
+        // Redirect back to job manager page
+        res.redirect('/jobManager/' + encodeURIComponent(company.name));
     } catch (error) {
         console.error('Error accepting applicant:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).send('Internal server error');
+    }
+});
+
+// Mark a job as complete (with PIN verification and money transfer)
+router.post('/jobManager/complete', isAuthenticated, async (req, res) => {
+    const db = req.app.locals.db;
+    const { jobId, employeeId, pay, title, pin } = req.body;
+    const ownerId = req.session.fb_id;
+
+    if (!jobId || !employeeId || !pay || !pin) {
+        return res.status(400).send('Missing required fields');
+    }
+
+    try {
+        // Verify PIN
+        const owner = await new Promise((resolve, reject) => {
+            db.get('SELECT pin, money FROM users WHERE fb_id = ?', [ownerId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!owner || owner.pin !== pin) {
+            return res.status(401).send('Invalid PIN');
+        }
+
+        // Check if owner has enough money
+        if (owner.money < pay) {
+            return res.status(400).send('Insufficient funds');
+        }
+
+        // Get job details to verify ownership
+        const job = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM jobs WHERE id = ?', [jobId], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!job) {
+            return res.status(404).send('Job not found');
+        }
+
+        // Verify company ownership
+        const company = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM companies WHERE name = ? COLLATE NOCASE', [job.company], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!company || company.owner_id !== ownerId) {
+            return res.status(403).send('You do not own this company');
+        }
+
+        // Transfer money from owner to employee
+        await new Promise((resolve, reject) => {
+            db.run('UPDATE users SET money = money - ? WHERE fb_id = ?', [pay, ownerId], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        await new Promise((resolve, reject) => {
+            db.run('UPDATE users SET money = money + ? WHERE fb_id = ?', [pay, employeeId], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        // Delete the job (mark as complete by removing it)
+        await new Promise((resolve, reject) => {
+            db.run('DELETE FROM jobs WHERE id = ?', [jobId], (err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        // Redirect back to job manager page
+        res.redirect('/jobManager/' + encodeURIComponent(company.name));
+    } catch (error) {
+        console.error('Error completing job:', error);
+        res.status(500).send('Internal server error');
     }
 });
 
