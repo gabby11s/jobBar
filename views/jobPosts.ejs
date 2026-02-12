@@ -6,12 +6,20 @@
     <title>Job Post</title>
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/post.css">
-
 </head>
-<body>
+<body
+  style="
+  background: <%= company ? 'linear-gradient(180deg, ' + company.pColor + ', ' + company.sColor + ')' : 'transparent' %>;
+  color: <%= company.bpColor %>;
+  --pColor: <%= company.pColor %>;
+  --sColor: <%= company.sColor %>;
+  --bpColor: <%= company.bpColor %>;
+  --bsColor: <%= company.bsColor %>;
+  " class="post-job-page">
     <nav class="top-controls">
-        <button onclick="location.href='/'">Home</button>
-        <button onclick="location.href='/companies'">Companies</button>
+        <button onclick="location.href='/'" style="border: 1px solid <%= company.bsColor %>;">Home</button>
+        <button onclick="location.href='/job/<%= encodeURIComponent(company.name) %>'" style="border: 1px solid <%= company.bsColor %>;">Job Page</button>
+        <button onclick="location.href='/companies'" style="border: 1px solid <%= company.bsColor %>;">Companies</button>
     </nav>
 
     <div class="container">
@@ -32,7 +40,7 @@
                 <input type="number" id="pay" name="pay" required>
             </div>
             <input type="hidden" name="status" value="available">
-            <button type="submit">Submit</button>
+            <button type="submit" style="background-color: <%= company.pColor %>; color: <%= company.bpColor %>; border: 1px solid <%= company.bpColor %>;">Submit</button>
         </form>
         <script>
             (function(){

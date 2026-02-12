@@ -17,15 +17,24 @@
 
 </head>
 
-<body>
+<body style="
+  background: <%= company ? 'linear-gradient(180deg, ' + company.pColor + ', ' + company.sColor + ')' : 'transparent' %>;
+  color: <%= company.bpColor %>;
+  --pColor: <%= company.pColor %>;
+  --sColor: <%= company.sColor %>;
+  --bpColor: <%= company.bpColor %>;
+  --bsColor: <%= company.bsColor %>;
+  ">
   <main class="jobs-container">
     <div class="nav-row">
-      <button class="small-btn" onclick="location.href='/companies'">All companies</button>
       <button class="small-btn" onclick="location.href='/'">Home</button>
+      <button class="small-btn" onclick="location.href='/job/<%= encodeURIComponent(company.name) %>'">Job Page</button>
+      <button class="small-btn" onclick="location.href='/companies'">All companies</button>
     </div>
 
     <div class="jobs-header">
-      <h1>Company: <%= company ? company.name : 'Not found' %></h1>
+      <h1>Company: <%= company ? company.name : 'Not found' %>
+      </h1>
     </div>
 
     <div class="jobs-columns">
@@ -33,59 +42,112 @@
       <section class="jobs-column">
         <h2>Available</h2>
         <div class="jobs-scroll">
-          <% if (jobs && jobs.length > 0) { %>
-            <% jobs.filter(job => job.status !== 'taken' && job.status !== 'completed').forEach(function(job){ %>
+          <% if (jobs && jobs.length> 0) { %>
+            <% jobs.filter(job=> !job.employee_id && !job.has_applications).forEach(function(job){ %>
               <article class="job-card">
-                <div class="job-title"><b><%= job.title %></b></div>
-                <div class="job-desc"><%= job.description %></div>
-                <div class="job-pay">Pay: <%= job.pay %></div>
+                <div class="job-title"><b>
+                    <%= job.title %>
+                  </b></div>
+                <div class="job-desc">
+                  <%= job.description %>
+                </div>
+                <div class="job-pay">Pay: <%= job.pay %>
+                </div>
                 <div class="job-meta available">Available</div>
               </article>
-            <% }) %>
-          <% } else { %>
-            <p>No available jobs</p>
-          <% } %>
+              <% }) %>
+                <% } else { %>
+                  <p>No available jobs</p>
+                  <% } %>
         </div>
       </section>
 
-      <!-- Taken Jobs Column -->
+      <!-- Applied For Column -->
+      <section class="jobs-column">
+        <h2>Applied For</h2>
+        <div class="jobs-scroll">
+          <% if (jobs && jobs.length> 0) { %>
+            <% jobs.filter(job=> job.has_applications && !job.employee_id).forEach(function(job){ %>
+              <article class="job-card">
+                <div class="job-title"><b>
+                    <%= job.title %>
+                  </b></div>
+                <div class="job-desc">
+                  <%= job.description %>
+                </div>
+                <div class="job-pay">Pay: <%= job.pay %>
+                </div>
+                <div class="job-meta taken">
+                  <%= job.applicants_count %> applicant(s)
+                    <ul style="padding-inline-start: 0px; list-style-type: none;">
+                      <% job.applicants.forEach(function(applicant){ %>
+                        <li>
+                          <%= applicant.name %>
+                          <button class="accept" data-job-id="<%= job.id %>" data-applicant-id="<%= applicant.fb_id %>">Accept</button>
+                        </li>
+                      <% }) %>
+                    </ul>
+                </div>
+              </article>
+              <% }) %>
+                <% } else { %>
+                  <p>No applications yet</p>
+                  <% } %>
+        </div>
+      </section>
+
+      <!-- In Progress Column (jobs with assigned employee) -->
       <section class="jobs-column">
         <h2>In Progress</h2>
         <div class="jobs-scroll">
-          <% if (jobs && jobs.length > 0) { %>
-            <% jobs.filter(job => job.status === 'taken').forEach(function(job){ %>
+          <% if (jobs && jobs.length> 0) { %>
+            <% jobs.filter(job=> job.employee_id && job.status !== 'completed').forEach(function(job){ %>
               <article class="job-card">
-                <div class="job-title"><b><%= job.title %></b></div>
-                <div class="job-desc"><%= job.description %></div>
-                <div class="job-pay">Pay: <%= job.pay %></div>
+                <div class="job-title"><b>
+                    <%= job.title %>
+                  </b></div>
+                <div class="job-desc">
+                  <%= job.description %>
+                </div>
+                <div class="job-pay">Pay: <%= job.pay %>
+                </div>
                 <div class="job-meta taken">
-                  Taken by <%= job.employee_name %>
-                  <button class="complete-button" data-job-id="<%= job.id %>">Mark As Complete</button>
+                  Assigned to <%= job.employee_name %>
+                    <button class="complete-button" data-job-id="<%= job.id %>"
+                      data-employee-id="<%= job.employee_id %>" data-pay="<%= job.pay %>" data-title="<%= job.title %>">
+                      Mark As Complete
+                    </button>
                 </div>
               </article>
-            <% }) %>
-          <% } else { %>
-            <p>No jobs in progress</p>
-          <% } %>
+              <% }) %>
+                <% } else { %>
+                  <p>No jobs in progress</p>
+                  <% } %>
         </div>
       </section>
 
-      <!-- Completed Jobs Column -->
+      <!-- Completed Jobs Column (unchanged) -->
       <section class="jobs-column">
         <h2>Completed</h2>
         <div class="jobs-scroll">
-          <% if (jobs && jobs.length > 0) { %>
-            <% jobs.filter(job => job.status === 'completed').forEach(function(job){ %>
+          <% if (jobs && jobs.length> 0) { %>
+            <% jobs.filter(job=> job.status === 'completed').forEach(function(job){ %>
               <article class="job-card">
-                <div class="job-title"><b><%= job.title %></b></div>
-                <div class="job-desc"><%= job.description %></div>
-                <div class="job-pay">Pay: <%= job.pay %></div>
-                <div class="job-meta completed">Completed by <%= job.employee_name %></div>
+                <div class="job-title"><b>
+                    <%= job.title %>
+                  </b></div>
+                <div class="job-desc">
+                  <%= job.description %>
+                </div>
+                <div class="job-pay">Pay: <%= job.pay %>
+                </div>
+                <div class="job-meta completed">Completed by <%= job.employee_name %>
+                </div>
               </article>
-            <% }) %>
-          <% } else { %>
-            <p>No completed jobs</p>
-          <% } %>
+              <% }) %>
+                <% } else { %>
+                  <p>No completed jobs</p>
+                  <% } %>
         </div>
       </section>
     </div>
