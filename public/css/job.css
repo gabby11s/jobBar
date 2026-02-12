@@ -44,8 +44,8 @@ body{
 /* Job Manager page - 3 column layout */
 .jobs-columns{
     display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:1.5rem;
+    grid-template-columns:repeat(4, 1fr);
+    gap:1rem;
     height:calc(100vh - 150px);  /* Takes remaining viewport height */
 }
 
@@ -157,7 +157,7 @@ body{
     color: var(--bsColor);
 }
 
-.complete-button{
+.complete-button, .accept{
     margin-left:0.5rem;
     padding:0.3rem 0.6rem;
     border-radius:6px;

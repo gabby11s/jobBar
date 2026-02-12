@@ -58,4 +58,38 @@ document.addEventListener('DOMContentLoaded', function () {
       }).catch(err => { console.error('Transfer error', err); alert('Transfer error'); });
     });
   }
+
+  // Handle "Accept" button clicks
+  document.querySelectorAll('.accept').forEach(button => {
+    button.addEventListener('click', async function () {
+      const jobId = this.getAttribute('data-job-id');
+      const applicantId = this.getAttribute('data-applicant-id');
+
+      if (!confirm('Accept this applicant for the job?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/jobManager/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobId: jobId,
+            applicantId: applicantId
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert(result.error || 'Failed to accept applicant');
+        }
+      } catch (err) {
+        console.error('Error accepting applicant:', err);
+        alert('An error occurred');
+      }
+    });
+  });
 });
