@@ -30,7 +30,7 @@ router.get('/jobPosts/:companyName', isAuthenticated, (req, res) => {
             return res.redirect('/companies');
         }
 
-        res.render('jobPosts', { title: 'Create a Job Post', company: companyName });
+        res.render('jobPosts', { title: 'Create a Job Post', company: companyRow });
     });
 });
 

@@ -25,8 +25,6 @@ CREATE TABLE IF NOT EXISTS companies (
     bpColor TEXT DEFAULT '#ffffff',
     bsColor TEXT DEFAULT '#000000'
 );
-    owner_id INTEGER
-);
 
 
 CREATE TABLE IF NOT EXISTS job_applications (
