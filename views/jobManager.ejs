@@ -96,11 +96,12 @@
                 <div class="job-pay">Pay: <%= job.pay %></div>
                 <div class="job-meta taken">
                   Assigned to <%= job.employee_name %>
-                  <button class="complete-button" 
-                          data-job-id="<%= job.id %>"
-                          data-employee-id="<%= job.employee_id %>"
-                          data-pay="<%= job.pay %>"
-                          data-title="<%= job.title %>">
+      <button class="complete-button" 
+        data-job-id="<%= job.id %>"
+        data-employee-id="<%= job.employee_id %>"
+        data-pay="<%= job.pay %>"
+        data-status="<%= job.status || '' %>"
+        data-title="<%= job.title %>">
                     Mark As Complete
                   </button>
                 </div>
@@ -133,109 +134,195 @@
     </div>
   </main>
 
-  <!-- PIN Popup for Mark As Complete -->
-  <div id="custom-popup" class="popup-overlay">
-    <div class="popup-content">
-      <button class="close-btn">&times;</button>
-      <h2>Enter PIN to Complete Job</h2>
-      <form id="popup-form">
-        <input type="password" id="pin" name="pin" placeholder="Enter your PIN" required>
-        <button type="submit">Confirm</button>
-      </form>
-    </div>
+       <div id="pin-modal">
+      <div class="pin-modal-content" role="dialog" aria-modal="true" aria-labelledby="pin-modal-title">
+        <h3 id="pin-cost">Pay them: 300</h3>
+        <h3 id="pin-modal-title">Enter your PIN</h3>
+                <input id="pin-input" type="password" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••" autocomplete="one-time-code" />
+                <div class="pin-actions">
+                    <button id="pin-cancel" type="button">Cancel</button>
+                    <button id="pin-confirm" type="button">Confirm</button>
+                </div>
+  </div>
   </div>
 
-  <script>
-    // Only handle the PIN popup for Mark As Complete
-    (function () {
-      const popup = document.getElementById('custom-popup');
-      if (!popup) { console.warn('JobManager: PIN popup element not found'); return; }
-      const closeBtn = popup.querySelector('.close-btn');
-      const popupForm = document.getElementById('popup-form');
-      
-      let currentJobId = null;
-      let currentEmployeeId = null;
-      let currentPay = null;
-      let currentTitle = null;
+     <script>
+            (function(){
+                const form = document.getElementById('jobpost-form');
+                if (!form) return;
 
-      // Handle "Mark As Complete" button clicks using event delegation
-      document.addEventListener('click', function (ev) {
-        const btn = ev.target.closest && ev.target.closest('.complete-button');
-        if (!btn) return;
-        ev.preventDefault();
-        try {
-          currentJobId = btn.getAttribute('data-job-id');
-          currentEmployeeId = btn.getAttribute('data-employee-id');
-          currentPay = btn.getAttribute('data-pay');
-          currentTitle = btn.getAttribute('data-title');
-          console.log('JobManager: opening PIN popup for job', currentJobId, { employee: currentEmployeeId, pay: currentPay });
-          // show popup and focus pin input
-          popup.style.display = 'flex';
-          const pinEl = document.getElementById('pin');
-          if (pinEl) { pinEl.value = ''; setTimeout(() => pinEl.focus(), 30); }
-        } catch (err) {
-          console.error('JobManager: error opening popup', err);
-        }
-      });
+                const modal = document.getElementById('pin-modal');
+                const pinInput = document.getElementById('pin-input');
+                const btnCancel = document.getElementById('pin-cancel');
+                const btnConfirm = document.getElementById('pin-confirm');
 
-      // Close popup
-      if (closeBtn) closeBtn.addEventListener('click', function () {
-        popup.style.display = 'none';
-        if (popupForm) popupForm.reset();
-      });
+                // allow Enter key in PIN field to confirm
+                pinInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); btnConfirm.click(); } });
 
-      popup.addEventListener('click', function (e) {
-        if (e.target === popup) {
-          popup.style.display = 'none';
-          if (popupForm) popupForm.reset();
-        }
-      });
+                let bypass = false;
 
-      if (!popupForm) { console.warn('JobManager: popup form not found'); return; }
+                function showModal(){ pinInput.value = ''; modal.style.display = 'flex'; setTimeout(()=> pinInput.focus(), 50); }
+                function hideModal(){ modal.style.display = 'none'; }
 
-      // Handle form submission: call server transfer endpoint with PIN, then reload on success
-      popupForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const pinEl = document.getElementById('pin');
-        const pin = pinEl ? pinEl.value : '';
+                async function awaitConfirm(){
+                    return new Promise((resolve)=>{
+                        const cleanup = ()=>{
+                            btnConfirm.removeEventListener('click', onConfirm);
+                            btnCancel.removeEventListener('click', onCancel);
+                            modal.removeEventListener('click', onOverlay);
+                        };
+                        const onConfirm = ()=>{ cleanup(); resolve(true); };
+                        const onCancel = ()=>{ cleanup(); resolve(false); };
+                        const onOverlay = (e)=>{ if (e.target === modal) { cleanup(); resolve(false); } };
+                        btnConfirm.addEventListener('click', onConfirm);
+                        btnCancel.addEventListener('click', onCancel);
+                        modal.addEventListener('click', onOverlay);
+                    });
+                }
 
-        if (!currentJobId || !currentEmployeeId || !currentPay) {
-          alert('Missing job context. Refresh the page and try again.');
-          return;
-        }
+                form.addEventListener('submit', async function(e){
+                    if (bypass) return; // allow normal submit when bypass is true
+                    e.preventDefault();
 
-        const payload = {
-          jobId: currentJobId,
-          to: currentEmployeeId,
-          amount: currentPay,
-          reason: `Completed ${currentTitle || ''}`,
-          pin: pin
-        };
+                    showModal();
+                    const ok = await awaitConfirm();
+                    if (!ok) { hideModal(); return; }
 
-        // hide popup while processing
-        popup.style.display = 'none';
+                    const pin = pinInput.value.trim();
+                    if (!pin) { alert('Please enter your PIN'); return; }
 
-        try {
-          const res = await fetch('/transfer/complete', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json().catch(() => ({}));
-          if (res.ok && data && data.success) {
-            // success: reload to reflect changes
-            window.location.reload();
-          } else {
-            alert('Transfer failed: ' + (data && data.message ? data.message : 'unknown'));
-          }
-        } catch (err) {
-          console.error('Transfer error', err);
-          alert('Transfer error');
-        }
-      });
-    })();
-  </script>
+                    const fd = new FormData(form);
+                    const payload = {
+                        company: fd.get('company'),
+                        title: fd.get('title'),
+                        description: fd.get('description'),
+                        pay: fd.get('pay'),
+                        pin: pin
+                    };
+
+                    try {
+                        btnConfirm.disabled = true;
+                        btnConfirm.textContent = 'Processing...';
+                        const res = await fetch('/transfer/job', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json().catch(()=>({}));
+                        if (res.ok && data && data.success) {
+                            // proceed to submit the original form to /jobPosts to persist the job
+                            bypass = true;
+                            hideModal();
+                            form.submit();
+                        } else {
+                            alert('Payment failed: ' + (data && data.message ? data.message : 'unknown'));
+                        }
+                    } catch(err) {
+                        console.error('Payment error', err);
+                        alert('Payment failed');
+                    } finally {
+                        btnConfirm.disabled = false;
+                        btnConfirm.textContent = 'Confirm';
+                    }
+                    });
+                  })();
+                </script>
+
+              <!-- Job Manager: wire Mark As Complete buttons to the shared PIN modal -->
+              <script>
+              (function(){
+                const modal = document.getElementById('pin-modal');
+                if (!modal) { console.warn('JobManager: pin-modal not found'); return; }
+                const pinInput = document.getElementById('pin-input');
+                const btnCancel = document.getElementById('pin-cancel');
+                const btnConfirm = document.getElementById('pin-confirm');
+
+                function showModal(){
+                  if (!pinInput) return;
+                  pinInput.value = '';
+                  modal.style.display = 'flex';
+                  setTimeout(()=> pinInput.focus(), 40);
+                }
+                function hideModal(){ modal.style.display = 'none'; }
+
+                function awaitConfirm(){
+                  return new Promise((resolve)=>{
+                    const cleanup = ()=>{
+                      btnConfirm.removeEventListener('click', onConfirm);
+                      btnCancel.removeEventListener('click', onCancel);
+                      modal.removeEventListener('click', onOverlay);
+                    };
+                    const onConfirm = ()=>{ cleanup(); resolve(true); };
+                    const onCancel = ()=>{ cleanup(); resolve(false); };
+                    const onOverlay = (e)=>{ if (e.target === modal) { cleanup(); resolve(false); } };
+                    btnConfirm.addEventListener('click', onConfirm);
+                    btnCancel.addEventListener('click', onCancel);
+                    modal.addEventListener('click', onOverlay);
+                  });
+                }
+
+                // Delegate clicks for complete buttons
+                document.addEventListener('click', async function(ev){
+                  const btn = ev.target.closest && ev.target.closest('.complete-button');
+                  if (!btn) return;
+                  ev.preventDefault();
+
+                  const jobId = btn.getAttribute('data-job-id');
+                  const employeeId = btn.getAttribute('data-employee-id');
+                  const pay = btn.getAttribute('data-pay');
+                  const status = btn.getAttribute('data-status') || '';
+                  const title = btn.getAttribute('data-title') || '';
+
+                  // Only allow completing jobs that are officially in_progress (owner must accept applicant first)
+                  if (status !== 'in_progress') { alert('Only in-progress jobs can be marked complete.'); return; }
+                  if (!jobId || !employeeId) { alert('Missing job info. Refresh and try again.'); return; }
+
+                  // update cost display to reflect this job's pay
+                  try {
+                    const costEl = document.getElementById('pin-cost');
+                    if (costEl) costEl.textContent = 'Complete Job Cost: ' + (pay || '0');
+                  } catch (e) { /* ignore */ }
+
+                  showModal();
+                  const ok = await awaitConfirm();
+                  if (!ok) { hideModal(); return; }
+
+                  const pin = pinInput ? pinInput.value.trim() : '';
+                  if (!pin) { alert('Please enter your PIN'); return; }
+
+                  // disable confirm while processing
+                  btnConfirm.disabled = true;
+                  const prevText = btnConfirm.textContent;
+                  btnConfirm.textContent = 'Processing...';
+
+                  try {
+                    const res = await fetch('/transfer/complete', {
+                      method: 'POST',
+                      credentials: 'same-origin',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ jobId: jobId, to: employeeId, amount: pay, reason: `Completed ${title}`, pin })
+                    });
+                    const data = await res.json().catch(()=>({}));
+                    if (res.ok && data && data.success) {
+                      hideModal();
+                      window.location.reload();
+                    } else {
+                      alert('Transfer failed: ' + (data && data.message ? data.message : 'unknown'));
+                      // show modal again so user can retry
+                      showModal();
+                    }
+                  } catch(err) {
+                    console.error('Transfer error', err);
+                    alert('Transfer error');
+                    showModal();
+                  } finally {
+                    btnConfirm.disabled = false;
+                    btnConfirm.textContent = prevText;
+                  }
+                });
+              })();
+              </script>
 </body>
 
 </html>
