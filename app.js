@@ -118,12 +118,23 @@ const jobPostsRouter = require('./routes/jobPosts');
 const jobRouter = require('./routes/job');
 const payRouter = require('./routes/payment');
 const jobManagerRouter = require('./routes/jobManager');
+const positionManagerRouter = require('./routes/positionManager');
+const eJobRouter = require('./routes/eJob');
+const ePostRouter = require('./routes/ePost');
+const positionRouter = require('./routes/position');
+const filesRouter = require('./routes/files');
 const allJobsRouter = require('./routes/allJobs');
 const editRouter = require('./routes/edit');
+const eformRouter = require('./routes/Eform');
 
 // Register routes
 app.use('/', editRouter);
 app.use('/', indexRouter);
+app.use('/', eformRouter);
+app.use('/', eJobRouter);
+app.use('/', ePostRouter);
+app.use('/', positionRouter);
+app.use('/', filesRouter);
 app.use('/', loginRouter);
 app.use('/', companiesRouter);
 app.use('/', postRouter);
@@ -132,6 +143,7 @@ app.use('/', allJobsRouter);
 app.use('/', jobRouter);
 app.use('/', payRouter);
 app.use('/', jobManagerRouter);
+app.use('/', positionManagerRouter);
 
 
 app.listen(port, () => {
