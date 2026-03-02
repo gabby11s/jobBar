@@ -97,12 +97,41 @@ router.post('/edit/job/:jobId', isAuthenticated, (req, res) => {
     }
     // accept link as optional (store empty string if missing)
     const safeLink = typeof link !== 'undefined' && link !== null ? String(link) : '';
-    const query = `UPDATE jobs SET title = ?, description = ?, pay = ?, link = ? WHERE id = ?`;
-    db.run(query, [title, description, pay, safeLink, jobId], function(err) {
+    // verify ownership and that job is editable (not in_progress or completed)
+    db.get('SELECT j.*, c.owner_id FROM jobs j LEFT JOIN companies c ON j.company = c.name WHERE j.id = ?', [jobId], (err, job) => {
         if (err) {
+            console.error('Database error checking job before edit:', err);
             return res.status(500).send('Internal Server Error');
         }
-        res.redirect('/jobManager/' + encodeURIComponent(req.body.company));
+        if (!job) return res.status(404).send('Job not found');
+
+        const companyOwnerFb = job.owner_id != null ? String(job.owner_id) : null;
+        const userFb = fb_id ? String(fb_id) : null;
+
+        // if the job isn't associated with any company, only allow admin (fb '1') to proceed
+        if (!companyOwnerFb && userFb !== '1') {
+            return res.status(403).send('Forbidden: Job is not associated with a company you own');
+        }
+
+        // require that the current user matches the company owner (unless admin)
+        if (userFb !== '1' && companyOwnerFb !== userFb) {
+            return res.status(403).send("Forbidden: You do not own this job's company");
+        }
+
+        // prevent editing if already in progress or completed
+        if (job.status === 'in_progress' || job.status === 'completed') {
+            const companyName = job.company || '';
+            return res.redirect('/jobManager/' + encodeURIComponent(companyName) + '?error=' + encodeURIComponent('Too late to edit this job.'));
+        }
+
+        const query = `UPDATE jobs SET title = ?, description = ?, pay = ?, link = ? WHERE id = ?`;
+        db.run(query, [title, description, pay, safeLink, jobId], function(err2) {
+            if (err2) {
+                console.error('Database error updating job:', err2);
+                return res.status(500).send('Internal Server Error');
+            }
+            res.redirect('/jobManager/' + encodeURIComponent(req.body.company));
+        });
     });
 });
 
